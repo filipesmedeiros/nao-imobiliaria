@@ -6,6 +6,8 @@ import { getPhoneNumber } from '@lib/mongoActions/getPhoneNumber'
 import { validatePhoneNumber } from '@lib/validatePhoneNumber'
 import { useUserId } from '@lib/context/userIdContext'
 import { fetcher } from '@lib/swrFetcher'
+import { UnkownPhoneNumber } from '@components/UnkownPhoneNumber'
+import { RegisteredPhoneNumber } from '@components/RegisteredPhoneNumber'
 
 export interface Props {
   phoneNumber: string
@@ -54,13 +56,25 @@ const PhoneNumberPage: NextPage<Props> = ({
   const userId = useUserId()
   const {
     data: { vote } = {},
-    isValidating,
+    isValidating: loadingUserVote,
     revalidate,
     mutate,
   } = useSWR<{ vote: boolean }>(
-    `/api/users/${userId}/votes/${phoneNumber}`,
+    isRegistered ? `/api/users/${userId}/votes/${phoneNumber}` : null,
     fetcher
   )
+
+  const memorizePreviousVotes = () => {
+    const originalUpvotes = upvotes
+    const originalDownvotes = downvotes
+    const originalUserVote = vote
+
+    return () => {
+      setUpvotes(originalUpvotes)
+      setDownvotes(originalDownvotes)
+      if (originalUserVote !== undefined) mutate({ vote: originalUserVote })
+    }
+  }
 
   const onRegisterPhoneNumber = () =>
     registerPhoneNumber(phoneNumber, userId).then(() => {
@@ -69,78 +83,37 @@ const PhoneNumberPage: NextPage<Props> = ({
       revalidate()
     })
 
-  const upvote = () => {
-    const originalUpvotes = upvotes
-    const originalDownvotes = downvotes
+  const onUpvote = () => {
+    const revert = memorizePreviousVotes()
     incUpvotes()
     if (vote === false) decDownvotes()
     mutate({ vote: true }, false)
 
-    const revert = () => {
-      setUpvotes(originalUpvotes)
-      setDownvotes(originalDownvotes)
-      mutate({ vote: false })
-    }
-
     voteOnPhoneNumber(phoneNumber, true, userId).catch(revert)
   }
-  const downvote = () => {
-    const originalUpvotes = upvotes
-    const originalDownvotes = downvotes
+
+  const onDownvote = () => {
+    const revert = memorizePreviousVotes()
     incDownvotes()
     if (vote) decUpvotes()
     mutate({ vote: false }, false)
 
-    const revert = (e: any) => {
-      setUpvotes(originalUpvotes)
-      setDownvotes(originalDownvotes)
-      mutate({ vote: true })
-    }
-
     voteOnPhoneNumber(phoneNumber, false, userId).catch(revert)
   }
-
-  const isAgent = upvotes > downvotes
-
-  console.log(vote)
 
   return (
     <div>
       <h1>{phoneNumber}</h1>
       {!isRegistered ? (
-        <div>
-          <h2>Este número ainda não está registado, queres registá-lo?</h2>
-          <button onClick={onRegisterPhoneNumber}>Registar</button>
-        </div>
+        <UnkownPhoneNumber onRegisterPhoneNumber={onRegisterPhoneNumber} />
       ) : (
-        <div>
-          {isAgent ? (
-            <div>
-              <h2>SIM</h2>
-              <h3>Este número pertence a um/a agente imobiliári@</h3>
-            </div>
-          ) : (
-            <div>
-              <h2>NÃO</h2>
-              <h3>Este número não pertence a um/a agente imobiliári@</h3>
-            </div>
-          )}
-          <div>
-            <div>{upvotes}</div>
-            <button onClick={upvote} disabled={isValidating || vote}>
-              Upvote
-            </button>
-          </div>
-          <div>
-            <div>{downvotes}</div>
-            <button
-              onClick={downvote}
-              disabled={isValidating || vote === false}
-            >
-              Downvote
-            </button>
-          </div>
-        </div>
+        <RegisteredPhoneNumber
+          upvotes={upvotes}
+          downvotes={downvotes}
+          userVote={{ vote, loading: loadingUserVote }}
+          onUpvote={onUpvote}
+          onDownvote={onDownvote}
+        />
       )}
     </div>
   )
