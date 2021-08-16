@@ -1,10 +1,11 @@
 import { GetServerSideProps, NextPage } from 'next'
+import useSWR from 'swr'
+import { useState } from 'react'
 
-import { getPhoneNumber } from '@lib/api/getPhoneNumber'
-import { useRouter } from 'next/router'
-import { useCallback, useState } from 'react'
+import { getPhoneNumber } from '@lib/mongoActions/getPhoneNumber'
 import { validatePhoneNumber } from '@lib/validatePhoneNumber'
-import { useFingerprint } from '@lib/context/fingerprintContext'
+import { useUserId } from '@lib/context/userIdContext'
+import { fetcher } from '@lib/swrFetcher'
 
 export interface Props {
   phoneNumber: string
@@ -12,6 +13,28 @@ export interface Props {
   upvotes?: number
   downvotes?: number
 }
+
+const registerPhoneNumber = (phoneNumber: string, userId: string) =>
+  fetch('/api/phoneNumbers', {
+    method: 'POST',
+    headers: [['Content-Type', 'application/json']],
+    body: JSON.stringify({ phoneNumber, userId }),
+  }).then(res => {
+    if (res.status < 200 || res.status >= 300) throw new Error()
+  })
+
+const voteOnPhoneNumber = (
+  phoneNumber: string,
+  vote: boolean,
+  userId: string
+) =>
+  fetch(`/api/phoneNumbers/${phoneNumber}/${vote ? 'up' : 'down'}vote`, {
+    method: 'POST',
+    headers: [['Content-Type', 'application/json']],
+    body: JSON.stringify({ userId }),
+  }).then(res => {
+    if (res.status < 200 || res.status >= 300) throw new Error()
+  })
 
 const PhoneNumberPage: NextPage<Props> = ({
   phoneNumber,
@@ -23,37 +46,63 @@ const PhoneNumberPage: NextPage<Props> = ({
   const [upvotes, setUpvotes] = useState(startingUpvotes ?? 0)
   const [downvotes, setDownvotes] = useState(startingDownvotes ?? 0)
 
-  const registerNumber = () =>
-    fetch(`/api/phoneNumbers/${phoneNumber}`, { method: 'POST' }).then(() => {
-      setIsRegistered(true)
-      setUpvotes(1)
-    })
+  const incUpvotes = () => setUpvotes(prevUpvotes => prevUpvotes + 1)
+  const decUpvotes = () => setUpvotes(prevUpvotes => prevUpvotes - 1)
+  const incDownvotes = () => setDownvotes(prevDownvotes => prevDownvotes + 1)
+  const decDownvotes = () => setDownvotes(prevDownvotes => prevDownvotes - 1)
 
-  const vote = (vote: boolean) =>
-    fetch(`/api/phoneNumbers/${phoneNumber}/${vote ? 'up' : 'down'}vote`, {
-      method: 'POST',
-    }).then(res => {
-      if (res.status < 200 || res.status >= 300) throw new Error()
+  const userId = useUserId()
+  const {
+    data: { vote } = {},
+    isValidating,
+    revalidate,
+    mutate,
+  } = useSWR<{ vote: boolean }>(
+    `/api/users/${userId}/votes/${phoneNumber}`,
+    fetcher
+  )
+
+  const onRegisterPhoneNumber = () =>
+    registerPhoneNumber(phoneNumber, userId).then(() => {
+      setIsRegistered(true)
+      incUpvotes()
+      revalidate()
     })
 
   const upvote = () => {
-    const tempUpvotes = upvotes
-    setUpvotes(prevUpvotes => prevUpvotes + 1)
-    vote(true).catch(() => setUpvotes(tempUpvotes))
+    const originalUpvotes = upvotes
+    const originalDownvotes = downvotes
+    incUpvotes()
+    if (vote === false) decDownvotes()
+    mutate({ vote: true }, false)
+
+    const revert = () => {
+      setUpvotes(originalUpvotes)
+      setDownvotes(originalDownvotes)
+      mutate({ vote: false })
+    }
+
+    voteOnPhoneNumber(phoneNumber, true, userId).catch(revert)
   }
   const downvote = () => {
-    const tempDownvotes = downvotes
-    setDownvotes(prevDownvotes => prevDownvotes + 1)
-    vote(false).catch(() => setDownvotes(tempDownvotes))
+    const originalUpvotes = upvotes
+    const originalDownvotes = downvotes
+    incDownvotes()
+    if (vote) decUpvotes()
+    mutate({ vote: false }, false)
+
+    const revert = (e: any) => {
+      setUpvotes(originalUpvotes)
+      setDownvotes(originalDownvotes)
+      mutate({ vote: true })
+    }
+
+    voteOnPhoneNumber(phoneNumber, false, userId).catch(revert)
   }
 
   const isAgent = upvotes > downvotes
 
-  const fingerprint = useFingerprint()
-  const getUserVote = () =>
-    fetch(`/api/users/${fingerprint}/votes/${phoneNumber}`).then(res =>
-      res.json()
-    )
+  console.log(vote)
 
   return (
     <div>
@@ -61,7 +110,7 @@ const PhoneNumberPage: NextPage<Props> = ({
       {!isRegistered ? (
         <div>
           <h2>Este número ainda não está registado, queres registá-lo?</h2>
-          <button onClick={registerNumber}>Registar</button>
+          <button onClick={onRegisterPhoneNumber}>Registar</button>
         </div>
       ) : (
         <div>
@@ -78,11 +127,18 @@ const PhoneNumberPage: NextPage<Props> = ({
           )}
           <div>
             <div>{upvotes}</div>
-            <button onClick={upvote}>Upvote</button>
+            <button onClick={upvote} disabled={isValidating || vote}>
+              Upvote
+            </button>
           </div>
           <div>
             <div>{downvotes}</div>
-            <button onClick={downvote}>Downvote</button>
+            <button
+              onClick={downvote}
+              disabled={isValidating || vote === false}
+            >
+              Downvote
+            </button>
           </div>
         </div>
       )}

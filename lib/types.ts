@@ -5,12 +5,6 @@ export interface PhoneNumber {
 }
 
 export interface User {
-  id: string
-  fingerprint: string
-  votes: Vote[]
-}
-
-export interface Vote {
-  phoneNumber: string
-  vote: boolean
+  userId: string
+  votes: Record<string, boolean>
 }
