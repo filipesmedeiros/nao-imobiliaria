@@ -3,7 +3,7 @@ export interface Props {
   downvotes?: number
   userVote: {
     loading: boolean
-    vote: boolean | undefined
+    vote: boolean | null | undefined
   }
   onUpvote: () => void
   onDownvote: () => void
@@ -19,17 +19,13 @@ export const RegisteredPhoneNumber = ({
   const isAgent = upvotes > downvotes
   return (
     <div>
-      {isAgent ? (
-        <div>
-          <h2>SIM</h2>
-          <h3>Este número pertence a um/a agente imobiliári@</h3>
-        </div>
-      ) : (
-        <div>
-          <h2>NÃO</h2>
-          <h3>Este número não pertence a um/a agente imobiliári@</h3>
-        </div>
-      )}
+      <div>
+        <h2>{isAgent ? 'SIM' : 'NÃO'}</h2>
+        <h3>
+          Este número {!isAgent ? 'não ' : ''}pertence a um/a agente imobiliári@
+        </h3>
+      </div>
+
       <div>
         <div>{upvotes}</div>
         <button onClick={onUpvote} disabled={loading || vote === true}>

@@ -22,7 +22,6 @@ const registerPhoneNumberHandler: NextApiHandler = async (
     const addUpvoteToUserPromise = addUpvoteToUser(userId, phoneNumber)
 
     await Promise.all([createPhoneNumberPromise, addUpvoteToUserPromise])
-
     status = 201
   }
   res.status(status).end()

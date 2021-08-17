@@ -1,8 +1,12 @@
 import { v4 } from 'uuid'
 import { AppProps } from 'next/app'
+import Head from 'next/head'
 import { useEffect, useState } from 'react'
 
 import { FingerprintProvider } from '@lib/context/userIdContext'
+import { Layout } from '@components/Layout'
+
+import '@styles/globals.css'
 
 const USERID_LOCAL_STORAGE_KEY = 'userId'
 
@@ -38,9 +42,19 @@ const App = ({ Component, pageProps }: AppProps) => {
   if (userId === null || userId === undefined) return <div>Loading...</div>
 
   return (
-    <FingerprintProvider userId={userId}>
-      <Component {...pageProps} />
-    </FingerprintProvider>
+    <>
+      <Head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1"
+        ></meta>
+      </Head>
+      <FingerprintProvider userId={userId}>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </FingerprintProvider>
+    </>
   )
 }
 

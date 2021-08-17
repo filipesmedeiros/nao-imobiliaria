@@ -1,4 +1,5 @@
 import { GetServerSideProps, NextPage } from 'next'
+import Head from 'next/head'
 import useSWR from 'swr'
 import { useState } from 'react'
 
@@ -8,6 +9,7 @@ import { useUserId } from '@lib/context/userIdContext'
 import { fetcher } from '@lib/swrFetcher'
 import { UnkownPhoneNumber } from '@components/UnkownPhoneNumber'
 import { RegisteredPhoneNumber } from '@components/RegisteredPhoneNumber'
+import { BigPhoneNumber } from '@components/BigPhoneNumber'
 
 export interface Props {
   phoneNumber: string
@@ -59,7 +61,7 @@ const PhoneNumberPage: NextPage<Props> = ({
     isValidating: loadingUserVote,
     revalidate,
     mutate,
-  } = useSWR<{ vote: boolean }>(
+  } = useSWR<{ vote: boolean | null }>(
     isRegistered ? `/api/users/${userId}/votes/${phoneNumber}` : null,
     fetcher
   )
@@ -103,7 +105,16 @@ const PhoneNumberPage: NextPage<Props> = ({
 
   return (
     <div>
-      <h1>{phoneNumber}</h1>
+      <Head>
+        <title>{phoneNumber} | Não, imobiliária!</title>
+        <meta
+          name="description"
+          content="Verifica se o número que te está a ligar pertence a um/a agente imobiliári@"
+        />
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+
+      <BigPhoneNumber phoneNumber={phoneNumber} />
       {!isRegistered ? (
         <UnkownPhoneNumber onRegisterPhoneNumber={onRegisterPhoneNumber} />
       ) : (

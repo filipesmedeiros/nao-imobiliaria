@@ -26,8 +26,11 @@ const upvotePhoneNumberHandler: NextApiHandler = async (
   }
 
   const hasVote = userVote !== undefined
-  addUpvoteToUser(userId, phoneNumber as string)
-  upvotePhoneNumber(phoneNumber as string, hasVote).then(res.json)
+  await Promise.all([
+    addUpvoteToUser(userId, phoneNumber as string),
+    upvotePhoneNumber(phoneNumber as string, hasVote),
+  ])
+  res.status(200).end()
 }
 
 const apiHandler: NextApiHandler = (req, res) =>
