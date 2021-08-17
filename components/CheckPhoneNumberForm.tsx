@@ -20,7 +20,7 @@ const FormControlGroup = styled.div`
   flex-direction: column;
   align-items: center;
 
-  gap: 3rem;
+  gap: 1.5rem;
 
   label {
     font-size: 2.5rem;

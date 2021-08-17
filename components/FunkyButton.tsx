@@ -5,6 +5,7 @@ import { gradientKeyframes } from '@styles/keyframes'
 export const FunkyButton = styled.button`
   font-size: 2rem;
   font-weight: 900;
+  letter-spacing: 0.2rem;
 
   padding: 1.5rem;
 
