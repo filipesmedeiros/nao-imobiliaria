@@ -3,7 +3,7 @@ import { AppProps } from 'next/app'
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 
-import { FingerprintProvider } from '@lib/context/userIdContext'
+import { UserIdProvider } from '@lib/context/userIdContext'
 import { Layout } from '@components/Layout'
 
 import '@styles/globals.css'
@@ -49,11 +49,11 @@ const App = ({ Component, pageProps }: AppProps) => {
           content="width=device-width, initial-scale=1"
         ></meta>
       </Head>
-      <FingerprintProvider userId={userId}>
+      <UserIdProvider userId={userId}>
         <Layout>
           <Component {...pageProps} />
         </Layout>
-      </FingerprintProvider>
+      </UserIdProvider>
     </>
   )
 }

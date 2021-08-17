@@ -7,13 +7,8 @@ export interface UserIdProviderProps {
   children: ReactNode
 }
 
-export const FingerprintProvider = ({
-  userId: fingerprint,
-  children,
-}: UserIdProviderProps) => (
-  <userIdContext.Provider value={fingerprint}>
-    {children}
-  </userIdContext.Provider>
+export const UserIdProvider = ({ userId, children }: UserIdProviderProps) => (
+  <userIdContext.Provider value={userId}>{children}</userIdContext.Provider>
 )
 
 export const useUserId = () => {

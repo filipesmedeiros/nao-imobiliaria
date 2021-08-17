@@ -1,7 +1,12 @@
 import styled from '@emotion/styled'
 import { useRouter } from 'next/router'
 import { useState } from 'react'
-import { FunkyButton } from './FunkyButton'
+
+import { gradientKeyframes } from '@styles/keyframes'
+import { useReducedMotion } from '@lib/hooks/useReducedMotion'
+import { FunkyButton } from '@components/FunkyButton'
+import { useRandomColor } from '@lib/hooks/useRandomColor'
+import { gradientWithLoop } from '@styles/theme'
 
 export interface Props {}
 
@@ -13,6 +18,26 @@ const FormWrapper = styled.form`
   align-items: center;
 
   gap: 3rem;
+
+  @media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+    :focus-within,
+    :active {
+      input[type='submit'] {
+        background-color: #88d0ec;
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (max-width: 768px) {
+    :focus-within,
+    :active {
+      input[type='submit'] {
+        animation: ${gradientKeyframes} 30s linear infinite;
+        background-image: linear-gradient(to right, ${gradientWithLoop});
+        background-size: 1000% 100%;
+      }
+    }
+  }
 `
 
 const FormControlGroup = styled.div`
@@ -30,8 +55,10 @@ const FormControlGroup = styled.div`
     font-size: 5rem;
     color: #311338;
     text-align: center;
+    font-weight: 700;
+    letter-spacing: 0.4rem;
 
-    width: calc(9ch + 2rem + 3rem);
+    width: calc(9ch + 4rem + 3rem);
     padding: 1.5rem;
 
     border: 5px solid;
@@ -48,6 +75,7 @@ const FormControlGroup = styled.div`
 
     ::placeholder {
       font-size: 2rem;
+      letter-spacing: normal;
     }
   }
 `
@@ -57,16 +85,26 @@ export const CheckPhoneNumberForm = ({}: Props) => {
 
   const [phoneNumber, setPhoneNumber] = useState('')
 
+  const reducedMotion = useReducedMotion()
+  console.log(reducedMotion)
+
+  const { color: phoneNumberColor, changeColor: changePhoneNumberColor } =
+    useRandomColor()
+
   return (
     <FormWrapper
       onSubmit={e => {
         e.preventDefault()
         push({ pathname: '/[phoneNumber]', query: { phoneNumber } })
       }}
+      onKeyPress={({ key, currentTarget }) => {
+        if (key === 'Enter') currentTarget.requestSubmit()
+      }}
     >
       <FormControlGroup>
         <label htmlFor="phone-number">Número de telefone/telemóvel</label>
         <input
+          maxLength={9}
           placeholder="Ligou-me outra vez... 😪"
           type="tel"
           name="phone-number"
@@ -78,7 +116,15 @@ export const CheckPhoneNumberForm = ({}: Props) => {
               'Por favor preencha o número corretamente'
             )
           }
-          onChange={({ target }) => setPhoneNumber(target.value)}
+          value={phoneNumber}
+          onKeyPress={e => {
+            if (Object.is(Number(e.key), NaN)) e.preventDefault()
+          }}
+          onChange={({ target }) => {
+            if (!reducedMotion) changePhoneNumberColor()
+            setPhoneNumber(target.value)
+          }}
+          style={{ color: phoneNumberColor }}
         />
       </FormControlGroup>
 

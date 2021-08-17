@@ -23,7 +23,7 @@ const Title = styled.h1`
 export const Header = () => (
   <HeaderWrapper>
     <StyledLink href="/">
-      <Title>Não, imboliária!</Title>
+      <Title>Não, imobiliária!</Title>
     </StyledLink>
   </HeaderWrapper>
 )

@@ -3,6 +3,8 @@ import styled from '@emotion/styled'
 
 import { Footer } from '@components/Footer'
 import { Header } from '@components/Header'
+import { gradientKeyframes } from '@styles/keyframes'
+import { gradientWithLoop } from '@styles/theme'
 
 export interface Props {
   children: ReactNode
@@ -18,6 +20,8 @@ const Container = styled.div`
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
+
+  background-color: #f7fdff;
 `
 
 const ContentWrapper = styled.div`
