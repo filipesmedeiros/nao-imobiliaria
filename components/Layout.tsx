@@ -11,8 +11,8 @@ export interface Props {
 }
 
 const Container = styled.div`
-  height: 100vh;
-  width: 100vw;
+  height: 100%;
+  width: 100%;
 
   padding: 0 4rem;
 
