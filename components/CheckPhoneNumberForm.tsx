@@ -32,7 +32,7 @@ const FormWrapper = styled.form`
     :focus-within,
     :active {
       input[type='submit'] {
-        animation: ${gradientKeyframes} 30s linear infinite;
+        animation: ${gradientKeyframes('right')} 30s linear infinite;
         background-image: linear-gradient(to right, ${gradientWithLoop});
         background-size: 1000% 100%;
       }
@@ -86,7 +86,6 @@ export const CheckPhoneNumberForm = ({}: Props) => {
   const [phoneNumber, setPhoneNumber] = useState('')
 
   const reducedMotion = useReducedMotion()
-  console.log(reducedMotion)
 
   const { color: phoneNumberColor, changeColor: changePhoneNumberColor } =
     useRandomColor()
